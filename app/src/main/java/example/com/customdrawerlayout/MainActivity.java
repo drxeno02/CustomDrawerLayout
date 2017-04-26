@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
         // setup drawer attributes
         setOffsetHeight(mCustomDrawerLayout, rlTop);
         mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_CLOSED);
+//        mCustomDrawerLayout.setSlideableView(mCustomDrawerLayout);
 
         // initialize listeners
         initializeListeners();
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (isDrawerMeasured && isViewMeasured) {
-                    mCustomDrawerLayout.setOffsetHeight(mOffsetHeight / 2);
+                    mCustomDrawerLayout.setOffsetHeight(mOffsetHeight / 4);
                 }
             }
         });

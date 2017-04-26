@@ -8,6 +8,9 @@
             <enum name="top" value="4"/>
             <enum name="bottom" value="1"/>
         </attr>
+
+         <attr name="umanoFlingVelocity" format="integer" />
+         <attr name="umanoScrollInterpolator" format="reference" />
     </declare-styleable>
 
 </resources>
