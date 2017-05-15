@@ -456,8 +456,8 @@ public class CustomDrawerLayout2 extends FrameLayout {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
-//                        params.bottomMargin = 0;
-//                        params.topMargin = 0;
+                        params.bottomMargin = 0;
+                        params.topMargin = 0;
                         break;
                     case LOCK_MODE_CLOSED:
                         params.bottomMargin = mOffsetHeight - getHeight();
