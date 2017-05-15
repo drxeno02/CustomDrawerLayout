@@ -15,10 +15,8 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
-import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getLocationInXAxis;
 import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getLocationInYAxis;
 import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getRawDisplayHeight;
-import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getRawDisplayWidth;
 import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.isClicked;
 
 /**
@@ -35,28 +33,6 @@ public class CustomDrawerLayout2 extends FrameLayout {
      * there into the viewable area.
      */
     public static final int GRAVITY_BOTTOM = 1;
-
-
-    /**
-     * Special value for the position of the layer. GRAVITY_LEFT means that the
-     * view shall be attached to the left side of the screen, and come from
-     * there into the viewable area.
-     */
-    public static final int GRAVITY_LEFT = 2;
-
-    /**
-     * Special value for the position of the layer. GRAVITY_RIGHT means that the
-     * view shall be attached to the right side of the screen, and come from
-     * there into the viewable area.
-     */
-    public static final int GRAVITY_RIGHT = 3;
-
-    /**
-     * Special value for the position of the layer. GRAVITY_TOP means that the
-     * view shall be attached to the top side of the screen, and come from
-     * there into the viewable area.
-     */
-    public static final int GRAVITY_TOP = 4;
 
     /**
      * The default size of the panel that sticks out when closed
@@ -79,7 +55,10 @@ public class CustomDrawerLayout2 extends FrameLayout {
     private static final LockMode DEFAULT_LOCK_MODE_STATE = LockMode.LOCK_MODE_CLOSED; // default lock mode
 
     // enums
-    public enum LockMode {LOCK_MODE_OPEN, LOCK_MODE_CLOSED}
+    public enum LockMode {
+        LOCK_MODE_OPEN, LOCK_MODE_CLOSED
+    }
+
     private enum ScrollState {VERTICAL, HORIZONTAL}
 
     // position of the last motion event
@@ -109,9 +88,6 @@ public class CustomDrawerLayout2 extends FrameLayout {
     private int mLastCoordinate;
     private long mPressStartTime;
 
-    // x, y coordinate tracker of views
-    private int mActivePointerId;
-
     /**
      * Sets the listener to be invoked after a switch change
      * {@link OnInteractListener}.
@@ -126,6 +102,7 @@ public class CustomDrawerLayout2 extends FrameLayout {
     @SuppressWarnings("unused")
     public interface OnInteractListener {
         void onDrawerOpened();
+
         void onDrawerClosed();
     }
 
@@ -178,14 +155,14 @@ public class CustomDrawerLayout2 extends FrameLayout {
         // get system constants for touch thresholds
         final ViewConfiguration configuration = ViewConfiguration.get(context);
         mTouchSlop = ViewConfigurationCompat.getScaledPagingTouchSlop(configuration);
-        mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
+        mMinimumVelocity = configuration.getScaledMinimumFlingVelocity() * 2;
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
         // set fling distance
         final float density = context.getResources().getDisplayMetrics().density;
         mFlingDistance = (int) (MIN_DISTANCE_FOR_FLING * density);
 
         // set scroll orientation
-        if (mStickTo == GRAVITY_BOTTOM || mStickTo == GRAVITY_TOP) {
+        if (mStickTo == GRAVITY_BOTTOM) {
             // vertical scrolling
             mScrollOrientation = ScrollState.VERTICAL;
         } else {
@@ -214,31 +191,20 @@ public class CustomDrawerLayout2 extends FrameLayout {
     public boolean onInterceptTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-//                mActivePointerId = MotionEventCompat.getPointerId(event, 0);
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
-                    case GRAVITY_TOP:
                         mInitialCoordinate = event.getY();
-                        break;
-                    case GRAVITY_LEFT:
-                    case GRAVITY_RIGHT:
-                        mInitialCoordinate = event.getX();
                         break;
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:
-
                 float coordinate = 0;
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
-                    case GRAVITY_TOP:
                         coordinate = event.getY();
-
                         break;
-                    case GRAVITY_LEFT:
-                    case GRAVITY_RIGHT:
-                        coordinate = event.getX();
+                    default:
                         break;
                 }
 
@@ -287,25 +253,7 @@ public class CustomDrawerLayout2 extends FrameLayout {
 
         switch (mStickTo) {
             case GRAVITY_BOTTOM:
-                Logger.e("TEST", "case GRAVITY_BOTTOM");
                 coordinate = (int) event.getRawY();
-                tapCoordinate = (int) event.getRawY();
-                Logger.e("TEST", "coordinate(event.getRawY())= " + coordinate);
-                Logger.e("TEST", "tapCoordinate(event.getRawY())= " + tapCoordinate);
-                break;
-            case GRAVITY_LEFT:
-                Logger.v("TEST", "case GRAVITY_LEFT");
-                coordinate = parent.getWidth() - (int) event.getRawX();
-                tapCoordinate = (int) event.getRawX();
-                break;
-            case GRAVITY_RIGHT:
-                Logger.v("TEST", "case GRAVITY_RIGHT");
-                coordinate = (int) event.getRawX();
-                tapCoordinate = (int) event.getRawX();
-                break;
-            case GRAVITY_TOP:
-                Logger.v("TEST", "case GRAVITY_TOP");
-                coordinate = getRawDisplayHeight(getContext()) - (int) event.getRawY();
                 tapCoordinate = (int) event.getRawY();
                 break;
             // if view position is not initialized throw an error
@@ -315,27 +263,11 @@ public class CustomDrawerLayout2 extends FrameLayout {
 
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
-                Logger.i("TEST", "ACTION_DOWN");
-                /*
-                 * Return the pointer identifier associated with a particular pointer data index is
-                 * this event. The identifier tells you the actual pointer number associated with
-                 * the data, accounting for individual pointers going up and down since the start
-                 * of the current gesture.
-                 */
-//                mActivePointerId = event.getPointerId(0);
-
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
                         mDelta = coordinate - ((RelativeLayout.LayoutParams) getLayoutParams()).topMargin;
                         break;
-                    case GRAVITY_LEFT:
-                        mDelta = coordinate - ((RelativeLayout.LayoutParams) getLayoutParams()).rightMargin;
-                        break;
-                    case GRAVITY_RIGHT:
-                        mDelta = coordinate - ((RelativeLayout.LayoutParams) getLayoutParams()).leftMargin;
-                        break;
-                    case GRAVITY_TOP:
-                        mDelta = coordinate - ((RelativeLayout.LayoutParams) getLayoutParams()).bottomMargin;
+                    default:
                         break;
                 }
 
@@ -344,155 +276,71 @@ public class CustomDrawerLayout2 extends FrameLayout {
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                Logger.i("TEST", "ACTION_MOVE");
                 RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) getLayoutParams();
-                Logger.i("TEST", "farMargin = coordinate - mDelta:: coordinate= " + coordinate + " //mDelta= " + mDelta);
                 final int farMargin = coordinate - mDelta;
-                Logger.i("TEST", "closeMargin = distance - farMargin:: distance= " + distance + " //farMargin= " + farMargin);
                 final int closeMargin = distance - farMargin;
-                Logger.i("TEST", "closeMargin = " + closeMargin);
-                Logger.i("TEST", "what is getHeight? " + getHeight() + " //what is mOffsetHeight? " + mOffsetHeight);
-                Logger.i("TEST", "what is parent.getHeight()? " + parent.getHeight());
-                Logger.v("TEST", "what is DeviceUtils.getDeviceHeightPx()? " + DeviceUtils.getDeviceHeightPx());
+
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
                         if (farMargin > distance && closeMargin > mOffsetHeight - getHeight()) {
-                            Logger.i("TEST", "GRAVITY_BOTTOM condition met");
-                            Logger.i("TEST", "---------------------------------------------");
                             layoutParams.bottomMargin = closeMargin;
                             layoutParams.topMargin = farMargin;
                         }
                         break;
-                    case GRAVITY_LEFT:
-                        if (farMargin > distance && closeMargin > mOffsetHeight - getWidth()) {
-                            layoutParams.leftMargin = closeMargin;
-                            layoutParams.rightMargin = farMargin;
-                        }
-                        break;
-                    case GRAVITY_RIGHT:
-                        if (farMargin > distance && closeMargin > mOffsetHeight - getWidth()) {
-                            layoutParams.rightMargin = closeMargin;
-                            layoutParams.leftMargin = farMargin;
-                        }
-                        break;
-                    case GRAVITY_TOP:
-                        if (farMargin > distance && closeMargin > mOffsetHeight - getHeight()) {
-                            layoutParams.topMargin = closeMargin;
-                            layoutParams.bottomMargin = farMargin;
-                        }
+                    default:
                         break;
                 }
                 setLayoutParams(layoutParams);
                 break;
 
             case MotionEvent.ACTION_UP:
-                Logger.i("TEST", "ACTION_UP");
                 final int diff = coordinate - mLastCoordinate;
                 final long pressDuration = System.currentTimeMillis() - mPressStartTime;
 
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
-                        Logger.i("TEST", "GRAVITY_BOTTOM");
-                        // determine if fling
+
+                        // determine velocity
                         int relativeVelocity;
-                        final VelocityTracker velocityTracker = mVelocityTracker;
-                        velocityTracker.addMovement(event);
-                        velocityTracker.computeCurrentVelocity(500, mMaximumVelocity); //originally 1000
-                        final int initialVelocityY = (int) velocityTracker.getYVelocity();
+                        mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                        final int initialVelocityY = (int) mVelocityTracker.getYVelocity();
                         relativeVelocity = initialVelocityY * -1;
+
                         // take absolute value to have positive values
                         final int absoluteVelocity = Math.abs(relativeVelocity);
 
-                        Logger.wtf("TEST", "---------------------------------------------");
-                        Logger.wtf("TEST", "diff= " + diff);
-                        Logger.wtf("TEST", "mFlingDistance= " + mFlingDistance);
-                        Logger.wtf("TEST", "absoluteVelocity= " + absoluteVelocity);
-                        Logger.wtf("TEST", "mMinimumVelocity= " + mMinimumVelocity);
-                        Logger.wtf("TEST", "parent.getHeight()= " + parent.getHeight());
-                        Logger.wtf("TEST", "getHeight()= " + getHeight());
-                        Logger.wtf("TEST", "DeviceUtils.getDeviceHeightPx()= " + DeviceUtils.getDeviceHeightPx());
-                        Logger.wtf("TEST", "---------------------------------------------");
-
-
-                        if (Math.abs(diff) > mFlingDistance && absoluteVelocity > mMinimumVelocity) {
-                            Logger.wtf("TEST", "SCENARIO 1");
+                        if (Math.abs(diff) > mTouchSlop) {
+                            // drag action
+                            // smooth scroll
+                            smoothScrollToAndNotify(diff);
+                        } else if (absoluteVelocity > mMinimumVelocity) {
+                            // fling action
                             if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
                                     mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                Logger.i("TEST", "notifyActionAndAnimateForState - 1");
-                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true); // should animate from tap coordinate?
+                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
                             } else if (Math.abs(getRawDisplayHeight(getContext()) -
                                     tapCoordinate - getHeight()) < mOffsetHeight &&
                                     mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                Logger.i("TEST", "notifyActionAndAnimateForState - 2");
-                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
-                            } else {
-                                Logger.wtf("TEST", "(1) when stuck getting into this???");
-                                smoothScrollToAndNotify(diff);
+                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+
                             }
                         } else {
-                            Logger.wtf("TEST", "SCENARIO 2");
+                            // tap action
                             if (isClicked(getContext(), diff, pressDuration)) {
                                 if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                    Logger.i("TEST", "notifyActionAndAnimateForState - 3");
                                     notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true);
                                 } else if (Math.abs(getRawDisplayHeight(getContext()) -
                                         tapCoordinate - getHeight()) < mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                    Logger.i("TEST", "notifyActionAndAnimateForState - 4");
                                     notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
-                                } else {
-                                    Logger.wtf("TEST", "(2) when stuck getting into this???");
                                 }
                             } else {
-                                Logger.i("TEST", "notifyActionAndAnimateForState - 5");
+                                // smooth scroll
                                 smoothScrollToAndNotify(diff);
                             }
                         }
                         break;
-//                    case GRAVITY_TOP:
-//                        Logger.i("TEST", "GRAVITY_TOP");
-//                        if (isClicked(getContext(), diff, pressDuration)) {
-//                            final int y = getLocationInYAxis(this);
-//                            if (tapCoordinate - Math.abs(y) <= mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_CLOSED) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true);
-//                            } else if (getHeight() - (tapCoordinate - Math.abs(y)) < mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_OPEN) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
-//                            }
-//                        } else {
-//                            smoothScrollToAndNotify(diff);
-//                        }
-//                        break;
-//                    case GRAVITY_LEFT:
-//                        Logger.i("TEST", "GRAVITY_LEFT");
-//                        if (isClicked(getContext(), diff, pressDuration)) {
-//                            if (tapCoordinate <= mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_CLOSED) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getWidth() - mOffsetHeight, true);
-//                            } else if (tapCoordinate > getWidth() - mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_OPEN) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getWidth() - mOffsetHeight, true);
-//                            }
-//                        } else {
-//                            smoothScrollToAndNotify(diff);
-//                        }
-//                        break;
-//                    case GRAVITY_RIGHT:
-//                        Logger.i("TEST", "GRAVITY_RIGHT");
-//                        if (isClicked(getContext(), diff, pressDuration)) {
-//                            if (parent.getWidth() - tapCoordinate <= mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_CLOSED) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getWidth() - mOffsetHeight, true);
-//                            } else if (parent.getWidth() - tapCoordinate > getWidth() - mOffsetHeight &&
-//                                    mLockMode == LockMode.LOCK_MODE_OPEN) {
-//                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getWidth() - mOffsetHeight, true);
-//                            }
-//                        } else {
-//                            smoothScrollToAndNotify(diff);
-//                        }
-//                        break;
                 }
                 break;
         }
@@ -505,26 +353,21 @@ public class CustomDrawerLayout2 extends FrameLayout {
      * @param diff
      */
     private void smoothScrollToAndNotify(int diff) {
-        Logger.i("TEST", "smoothScrollToAndNotify called :: diff= " + diff);
         int length = getLength();
         LockMode stateToApply;
         if (diff > 0) {
             if (diff > length / 2.5) {
-                Logger.i("TEST", "smoothScrollToAndNotify - 1");
                 stateToApply = LockMode.LOCK_MODE_CLOSED;
                 notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), true);
             } else if (mLockMode == LockMode.LOCK_MODE_OPEN) {
-                Logger.i("TEST", "smoothScrollToAndNotify - 2");
                 stateToApply = LockMode.LOCK_MODE_OPEN;
                 notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), false);
             }
         } else {
             if (Math.abs(diff) > length / 2.5) {
-                Logger.i("TEST", "smoothScrollToAndNotify - 3");
                 stateToApply = LockMode.LOCK_MODE_OPEN;
                 notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), true);
             } else if (mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                Logger.i("TEST", "smoothScrollToAndNotify - 4");
                 stateToApply = LockMode.LOCK_MODE_CLOSED;
                 notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), false);
             }
@@ -549,36 +392,7 @@ public class CustomDrawerLayout2 extends FrameLayout {
                         return getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight;
                 }
                 break;
-            case GRAVITY_TOP:
-                final int actionBarDiff = getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight();
-                final int y = getLocationInYAxis(this) + getHeight();
-
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        return getHeight() - y + actionBarDiff;
-
-                    case LOCK_MODE_CLOSED:
-                        return y - mOffsetHeight - actionBarDiff;
-                }
-                break;
-            case GRAVITY_LEFT:
-                final int x = getLocationInXAxis(this) + getWidth();
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        return getWidth() - x;
-
-                    case LOCK_MODE_CLOSED:
-                        return x - mOffsetHeight;
-                }
-                break;
-            case GRAVITY_RIGHT:
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        return getWidth() - (getRawDisplayWidth(getContext()) - getLocationInXAxis(this));
-
-                    case LOCK_MODE_CLOSED:
-                        return getRawDisplayWidth(getContext()) - getLocationInXAxis(this) - mOffsetHeight;
-                }
+            default:
                 break;
         }
         throw new IllegalStateException("Failed to return translation for drawer");
@@ -606,31 +420,12 @@ public class CustomDrawerLayout2 extends FrameLayout {
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
                                         notifyActionForState(stateToApply, notify);
-                                        Logger.e("TEST", "setTranslationY to 0 for OPEN");
-                                        setTranslationY(0);
+                                        setTranslationY(-translation);
                                     }
                                 });
                         break;
                     case LOCK_MODE_CLOSED:
-                        animate().translationY(translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        Logger.e("TEST", "setTranslationY to 0 for CLOSED");
-                                        setTranslationY(0);
-                                    }
-                                });
-                        break;
-                }
-                break;
-            case GRAVITY_TOP:
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        animate().translationY(translation)
+                        animate().translationY(0)
                                 .setDuration(TRANSLATION_ANIM_DURATION)
                                 .setInterpolator(new DecelerateInterpolator())
                                 .setListener(new AnimatorListenerAdapter() {
@@ -639,79 +434,6 @@ public class CustomDrawerLayout2 extends FrameLayout {
                                         super.onAnimationEnd(animation);
                                         notifyActionForState(stateToApply, notify);
                                         setTranslationY(0);
-                                    }
-                                });
-                        break;
-                    case LOCK_MODE_CLOSED:
-                        animate().translationY(-translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        setTranslationY(0);
-                                    }
-                                });
-                        break;
-                }
-                break;
-            case GRAVITY_LEFT:
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        animate().translationX(translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        setTranslationX(0);
-                                    }
-                                });
-                        break;
-                    case LOCK_MODE_CLOSED:
-                        animate().translationX(-translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        setTranslationX(0);
-                                    }
-                                });
-                        break;
-                }
-                break;
-            case GRAVITY_RIGHT:
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        animate().translationX(-translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        setTranslationX(0);
-                                    }
-                                });
-                        break;
-                    case LOCK_MODE_CLOSED:
-                        animate().translationX(translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(stateToApply, notify);
-                                        setTranslationX(0);
                                     }
                                 });
                         break;
@@ -727,65 +449,24 @@ public class CustomDrawerLayout2 extends FrameLayout {
      * @param notify
      */
     private void notifyActionForState(LockMode stateToApply, boolean notify) {
-
-//        final int distance = getDistance();
+        // create params
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) getLayoutParams();
 
         switch (mStickTo) {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
-                        Logger.e("TEST", "LOCK_MODE_OPEN");
-                        params.bottomMargin = 0;
-                        params.topMargin = 0;
+//                        params.bottomMargin = 0;
+//                        params.topMargin = 0;
                         break;
                     case LOCK_MODE_CLOSED:
-//                        Logger.e("TEST", "LOCK_MODE_CLOSED :: mOffsetHeight= " + mOffsetHeight +
-//                                " //getHeight()= " + getHeight() + " //mOffsetHeight - getHeight()= " + (mOffsetHeight - getHeight()));
-//
-//                        Logger.e("TEST", "LOCK_MODE_CLOSED :: distance - (mOffsetHeight - getHeight())= " + (distance - (mOffsetHeight - getHeight())));
                         params.bottomMargin = mOffsetHeight - getHeight();
                         params.topMargin = -(mOffsetHeight - getHeight());
                         break;
                 }
                 break;
-//            case GRAVITY_LEFT:
-//                switch (stateToApply) {
-//                    case LOCK_MODE_OPEN:
-//                        params.leftMargin = 0;
-//                        params.rightMargin = distance;
-//                        break;
-//                    case LOCK_MODE_CLOSED:
-//                        params.leftMargin = mOffsetHeight - getWidth();
-//                        params.rightMargin = distance - (mOffsetHeight - getWidth());
-//                        break;
-//                }
-//                break;
-//
-//            case GRAVITY_RIGHT:
-//                switch (stateToApply) {
-//                    case LOCK_MODE_OPEN:
-//                        params.rightMargin = 0;
-//                        params.leftMargin = distance;
-//                        break;
-//                    case LOCK_MODE_CLOSED:
-//                        params.rightMargin = mOffsetHeight - getWidth();
-//                        params.leftMargin = distance - (mOffsetHeight - getWidth());
-//                        break;
-//                }
-//                break;
-//            case GRAVITY_TOP:
-//                switch (stateToApply) {
-//                    case LOCK_MODE_OPEN:
-//                        params.topMargin = 0;
-//                        params.bottomMargin = distance;
-//                        break;
-//                    case LOCK_MODE_CLOSED:
-//                        params.topMargin = mOffsetHeight - getHeight();
-//                        params.bottomMargin = distance - (mOffsetHeight - getHeight());
-//                        break;
-//                }
-//                break;
+            default:
+                break;
         }
         if (notify) {
             notifyActionFinished(stateToApply);
@@ -884,11 +565,11 @@ public class CustomDrawerLayout2 extends FrameLayout {
 
     /**
      * Method is used to set the default lock mode, e.g. OPEN OR CLOSED
+     *
      * @param lockMode
      */
     public void setDefaultLockMode(LockMode lockMode) {
         mLockMode = lockMode;
         notifyActionForState(mLockMode, false);
     }
-
 }
