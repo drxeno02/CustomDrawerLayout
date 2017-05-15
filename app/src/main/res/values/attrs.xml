@@ -8,9 +8,16 @@
             <enum name="top" value="4"/>
             <enum name="bottom" value="1"/>
         </attr>
+    </declare-styleable>
 
-         <attr name="umanoFlingVelocity" format="integer" />
-         <attr name="umanoScrollInterpolator" format="reference" />
+    <declare-styleable name="SlidingDrawer">
+        <attr name="animateOnClick" format="boolean" />
+        <attr name="allowSingleTap" format="boolean" />
+        <attr name="topOffset" format="dimension" />
+        <attr name="bottomOffset" format="dimension" />
+        <attr name="android:orientation" />
+        <attr name="handle" format="reference" />
+        <attr name="content" format="reference" />
     </declare-styleable>
 
 </resources>

@@ -8,7 +8,7 @@ import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RelativeLayout rlTop;
+    private RelativeLayout rlTop, rlSlideable;
     private CustomDrawerLayout mCustomDrawerLayout;
     private int mOffsetHeight;
     private boolean isDrawerMeasured, isViewMeasured;
@@ -21,11 +21,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //////////////////////////////
+//        setContentView(R.layout.main);
+//        SlidingDrawer slidingDrawer = (SlidingDrawer) findViewById(R.id.drawer);
+        //////////////////////////////
+
         rlTop = (RelativeLayout) findViewById(R.id.rl_top);
         mCustomDrawerLayout = (CustomDrawerLayout) findViewById(R.id.sliding_layout);
+        rlSlideable = (RelativeLayout) findViewById(R.id.slideable);
         // setup drawer attributes
-        setOffsetHeight(mCustomDrawerLayout, rlTop);
-        mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_CLOSED);
+        setOffsetHeight(rlSlideable, rlTop);
+        mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_OPEN);
+        mCustomDrawerLayout.setSlideableView(this, rlSlideable, mCustomDrawerLayout);
+        ////////////////////////////////
 //        mCustomDrawerLayout.setSlideableView(mCustomDrawerLayout);
 
         // initialize listeners
@@ -39,17 +47,11 @@ public class MainActivity extends AppCompatActivity {
         onMeasureHeightReadyListener(new OnMeasureHeightReadyListener() {
             @Override
             public void onMeasuredHeight(int viewId, int height) {
-                // update offset height
-                mOffsetHeight = mOffsetHeight + height;
-
-                if (viewId == mCustomDrawerLayout.getId()) {
-                    isDrawerMeasured = true;
-                } else if (viewId == rlTop.getId()) {
-                    isViewMeasured = true;
-                }
-
-                if (isDrawerMeasured && isViewMeasured) {
-                    mCustomDrawerLayout.setOffsetHeight(mOffsetHeight / 4);
+                if (viewId == rlSlideable.getId()) {
+                    // update offset height
+                    mOffsetHeight = rlSlideable.getMeasuredHeight();
+                    // set offset height
+                    mCustomDrawerLayout.setOffsetHeight(mOffsetHeight);
                 }
             }
         });
