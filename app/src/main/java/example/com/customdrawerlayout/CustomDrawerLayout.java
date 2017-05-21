@@ -393,9 +393,36 @@ public class CustomDrawerLayout extends FrameLayout {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
-                        return getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this));
+                        Logger.v("TEST", "---------------open------------");
+                        Logger.v("TEST", "getHeight()= " + getHeight());
+                        Logger.v("TEST", "getRawDisplayHeight(getContext())= " + getRawDisplayHeight(getContext()));
+                        Logger.v("TEST", "getLocationInYAxis(this)= " + getLocationInYAxis(this));
+                        Logger.v("TEST", "((View) getParent()).getHeight()= " + ((View) getParent()).getHeight());
+                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()= " +
+                                (getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()));
+                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this))= " +
+                            (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this))));
+                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight)= " +
+                                (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this)) - mOffsetHeight));
+                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) + mOffsetHeight)= " +
+                                (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this)) + mOffsetHeight));
+                        Logger.v("TEST", "--------------------------------");
 
+                        return getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this));
                     case LOCK_MODE_CLOSED:
+                        Logger.v("TEST", "---------------closed------------");
+                        Logger.v("TEST", "getHeight()= " + getHeight());
+                        Logger.v("TEST", "getRawDisplayHeight(getContext())= " + getRawDisplayHeight(getContext()));
+                        Logger.v("TEST", "getLocationInYAxis(this)= " + getLocationInYAxis(this));
+                        Logger.v("TEST", "((View) getParent()).getHeight()= " + ((View) getParent()).getHeight());
+                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()= " +
+                                (getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()));
+                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight= " +
+                                (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight));
+                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - 500= " +
+                                (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - 500));
+                        Logger.v("TEST", "--------------------------------");
+
                         return getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight;
                 }
                 break;

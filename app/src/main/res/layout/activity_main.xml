@@ -68,7 +68,7 @@
             android:clickable="true"
             android:visibility="visible">
 
-            <example.com.customdrawerlayout.CustomDrawerLayout2
+            <example.com.customdrawerlayout.CustomDrawerLayout
                 android:id="@+id/sliding_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -83,7 +83,7 @@
 
                 </RelativeLayout>
 
-            </example.com.customdrawerlayout.CustomDrawerLayout2>
+            </example.com.customdrawerlayout.CustomDrawerLayout>
 
         </RelativeLayout>
 
