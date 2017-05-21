@@ -2,12 +2,14 @@ package example.com.customdrawerlayout;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -30,7 +32,7 @@ import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.isClicked;
 
 public class CustomDrawerLayout extends FrameLayout {
 
-    private static final String TAG = CustomDrawerLayout2.class.getSimpleName();
+    private static final String TAG = CustomDrawerLayout.class.getSimpleName();
 
     /**
      * Special value for the position of the layer. GRAVITY_BOTTOM means that the
@@ -147,14 +149,7 @@ public class CustomDrawerLayout extends FrameLayout {
      */
     public CustomDrawerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-//        Logger.v("TEST", "ok, setting context here");
-//        mContext = context;
-//        if (!FrameworkUtils.checkIfNull(mContext)) {
-//            Logger.v("TEST", "context is not null");
-//        } else {
-//            Logger.v("TEST", "context is null");
-//        }
-//
+
         // get the attributes specified in attrs.xml
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs,
                 R.styleable.CustomDrawerLayout, 0, 0);
@@ -417,46 +412,6 @@ public class CustomDrawerLayout extends FrameLayout {
         throw new IllegalStateException("Failed to return translation for drawer");
     }
 
-    private void toggle() {
-        switch (mStickTo) {
-            case GRAVITY_BOTTOM:
-                switch (mLockMode) {
-                    case LOCK_MODE_OPEN:
-                        Logger.e("TEST", "using toggle to close drawer");
-                        animate().translationY(-(mAbsoluteMaximumHeight - mOffsetHeight))
-                                .setDuration(10000) //TRANSLATION_ANIM_DURATION
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(LockMode.LOCK_MODE_CLOSED);
-                                        Toast.makeText(mContext, "Drawer just now closed", Toast.LENGTH_LONG).show();
-                                        setTranslationY(-(mAbsoluteMaximumHeight - mOffsetHeight));
-                                    }
-                                });
-                        break;
-                    case LOCK_MODE_CLOSED:
-                        Logger.e("TEST", "using toggle to open drawer");
-                        animate().translationY(0)
-                                .setDuration(10000) //TRANSLATION_ANIM_DURATION
-                                .setInterpolator(new DecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        notifyActionForState(LockMode.LOCK_MODE_OPEN);
-                                        Toast.makeText(mContext, "Drawer just now opened", Toast.LENGTH_LONG).show();
-                                        setTranslationY(0);
-                                    }
-                                });
-                        break;
-                }
-                break;
-        }
-    }
-
-
     /**
      * Method is used to perform the animations
      *
@@ -512,12 +467,10 @@ public class CustomDrawerLayout extends FrameLayout {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_CLOSED:
-                        Logger.v("TEST", "<notifyActionForState> LOCK_MODE_CLOSED");
 //                        params.bottomMargin = 0;
 //                        params.topMargin = 0;
                         break;
                     case LOCK_MODE_OPEN:
-                        Logger.v("TEST", "<notifyActionForState> LOCK_MODE_OPEN");
                         params.bottomMargin = mOffsetHeight - getHeight();
                         params.topMargin = -(mOffsetHeight - getHeight());
                         break;
@@ -628,68 +581,4 @@ public class CustomDrawerLayout extends FrameLayout {
         mLockMode = lockMode;
         notifyActionForState(mLockMode);
     }
-
-    ///////////////////////////////////////////
-
-    private View mSlideableView, mDrawerView;
-    private int mAbsoluteMaximumHeight;
-    private Context mContext;
-
-    public void setSlideableView(Context context, View slideableView, View drawer) {
-        mContext = context;
-
-        mSlideableView = slideableView;
-        mDrawerView = drawer;
-        Logger.wtf("TEST", "<setSlideableView> DEVICE HEIGHT (Info) = " + DeviceUtils.getDeviceHeightPx());
-
-        mSlideableView.setClickable(true);
-        mSlideableView.setFocusable(false);
-        mSlideableView.setFocusableInTouchMode(false);
-        mSlideableView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Logger.v("TEST", "clickable slideable view");
-                toggle();
-            }
-        });
-
-        mSlideableView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                // remove view tree observer
-                mSlideableView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                // absolute maximum height
-                mAbsoluteMaximumHeight = mDrawerView.getMeasuredHeight();
-                Logger.i("TEST", "<setSlideableView :: onGlobalLayout> mAbsoluteMaximumHeight = " + mAbsoluteMaximumHeight);
-                Logger.i("TEST", "<setSlideableView :: onGlobalLayout> mOffsetHeight = " + mOffsetHeight);
-            }
-        });
-    }
-
-//    @Override
-//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//        Logger.e("TEST", "<onMeasure> called");
-//        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-//        final int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-//        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-//        final int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-//        Logger.e("TEST", "<onMeasure> widthMode= " + widthMode);
-//        Logger.e("TEST", "<onMeasure> widthSize= " + widthSize);
-//        Logger.e("TEST", "<onMeasure> heightMode= " + heightMode);
-//        Logger.e("TEST", "<onMeasure> heightSize= " + heightSize);
-//        Logger.i("TEST", "<onMeasure> SLIDEABLE VIEW HEIGHT get measured height of slideable view = " + mSlideableView.getMeasuredHeight());
-//
-//
-//        if (widthMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.UNSPECIFIED) {
-//            throw new RuntimeException("The SlidingDrawer cannot have unspecified dimensions");
-//        }
-//
-////        measureChild(mSlideableView, widthMeasureSpec, heightMeasureSpec);
-//        Logger.e("TEST", "<onMeasure> childCount= " + getChildCount());
-//        Logger.e("TEST", "<onMeasure> layoutHeight= " + (heightSize - getPaddingTop() - getPaddingBottom()) +
-//        " //layoutWidth= " + (widthSize - getPaddingLeft() - getPaddingRight()));
-//
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//    }
 }

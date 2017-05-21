@@ -54,7 +54,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
  * content: </p>
  *
  * <pre class="prettyprint">
- * &lt;hollowsoft.slidingdrawer.SlidingDrawer
+ * &lt;example.com.slidingdrawer.SlidingDrawer
  *     android:id="@+id/drawer"
  *     android:layout_width="match_parent"
  *     android:layout_height="match_parent"
@@ -71,12 +71,11 @@ import android.view.accessibility.AccessibilityNodeInfo;
  *     android:layout_width="match_parent"
  *     android:layout_height="match_parent"/&gt;
  *
- * &lt;/hollowsoft.slidingdrawer.SlidingDrawer&gt;
+ * &lt;/example.com.slidingdrawer.SlidingDrawer&gt;
  * </pre>
  *
- * @author Igor Morais
  */
-public class SlidingDrawer extends ViewGroup {
+public class SlidingDrawer extends ViewGroup { // 2nd approach
 
     private static final int TAP_THRESHOLD = 6;
     private static final float MAX_TAP_VELOCITY = 100.0f;

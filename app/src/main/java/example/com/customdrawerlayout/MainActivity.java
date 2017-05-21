@@ -9,7 +9,7 @@ import android.widget.RelativeLayout;
 public class MainActivity extends AppCompatActivity {
 
     private RelativeLayout rlTop, rlSlideable;
-    private CustomDrawerLayout mCustomDrawerLayout;
+    private CustomDrawerLayout2 mCustomDrawerLayout;
     private int mOffsetHeight;
     private boolean isDrawerMeasured, isViewMeasured;
 
@@ -27,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
         //////////////////////////////
 
         rlTop = (RelativeLayout) findViewById(R.id.rl_top);
-        mCustomDrawerLayout = (CustomDrawerLayout) findViewById(R.id.sliding_layout);
+        mCustomDrawerLayout = (CustomDrawerLayout2) findViewById(R.id.sliding_layout);
         rlSlideable = (RelativeLayout) findViewById(R.id.slideable);
         // setup drawer attributes
         setOffsetHeight(rlSlideable, rlTop);
-        mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_OPEN);
-        mCustomDrawerLayout.setSlideableView(this, rlSlideable, mCustomDrawerLayout);
+        mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout2.LockMode.LOCK_MODE_OPEN);
+//        mCustomDrawerLayout.setSlideableView(this, rlSlideable, mCustomDrawerLayout);
         ////////////////////////////////
 //        mCustomDrawerLayout.setSlideableView(mCustomDrawerLayout);
 
