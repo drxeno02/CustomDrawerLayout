@@ -86,6 +86,7 @@ public class CustomDrawerLayout extends FrameLayout {
     private ScrollState mScrollOrientation;
     // flag for when drawer is initialized
     private boolean isDrawerInitialized;
+    private boolean isAnimating;
     // interaction listener
     private OnInteractListener mOnInteractListener;
     // velocity tracker
@@ -316,35 +317,37 @@ public class CustomDrawerLayout extends FrameLayout {
                         // take absolute value to have positive values
                         final int absoluteVelocity = Math.abs(relativeVelocity);
 
-                        if (Math.abs(diff) > mTouchSlop) {
-                            // drag action
-                            // smooth scroll
-                            smoothScrollToAndNotify(diff);
-                        } else if (absoluteVelocity > mMinimumVelocity) {
-                            // fling action
-                            if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
-                                    mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
-                            } else if (Math.abs(getRawDisplayHeight(getContext()) -
-                                    tapCoordinate - getHeight()) < mOffsetHeight &&
-                                    mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
-
-                            }
-                        } else {
-                            // tap action
-                            if (isClicked(getContext(), diff, pressDuration)) {
+                        if (!isAnimating) {
+                            if (Math.abs(diff) > mTouchSlop) {
+                                // drag action
+                                // smooth scroll
+                                smoothScrollToAndNotify(diff);
+                            } else if (absoluteVelocity > mMinimumVelocity) {
+                                // fling action
                                 if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true);
+                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
                                 } else if (Math.abs(getRawDisplayHeight(getContext()) -
                                         tapCoordinate - getHeight()) < mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
+                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+
                                 }
                             } else {
-                                // smooth scroll
-                                smoothScrollToAndNotify(diff);
+                                // tap action
+                                if (isClicked(getContext(), diff, pressDuration)) {
+                                    if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
+                                            mLockMode == LockMode.LOCK_MODE_CLOSED) {
+                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true);
+                                    } else if (Math.abs(getRawDisplayHeight(getContext()) -
+                                            tapCoordinate - getHeight()) < mOffsetHeight &&
+                                            mLockMode == LockMode.LOCK_MODE_OPEN) {
+                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
+                                    }
+                                } else {
+                                    // smooth scroll
+                                    smoothScrollToAndNotify(diff);
+                                }
                             }
                         }
                         break;
@@ -393,36 +396,8 @@ public class CustomDrawerLayout extends FrameLayout {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
-                        Logger.v("TEST", "---------------open------------");
-                        Logger.v("TEST", "getHeight()= " + getHeight());
-                        Logger.v("TEST", "getRawDisplayHeight(getContext())= " + getRawDisplayHeight(getContext()));
-                        Logger.v("TEST", "getLocationInYAxis(this)= " + getLocationInYAxis(this));
-                        Logger.v("TEST", "((View) getParent()).getHeight()= " + ((View) getParent()).getHeight());
-                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()= " +
-                                (getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()));
-                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this))= " +
-                            (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this))));
-                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight)= " +
-                                (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this)) - mOffsetHeight));
-                        Logger.v("TEST", "getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) + mOffsetHeight)= " +
-                                (getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this)) + mOffsetHeight));
-                        Logger.v("TEST", "--------------------------------");
-
                         return getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this));
                     case LOCK_MODE_CLOSED:
-                        Logger.v("TEST", "---------------closed------------");
-                        Logger.v("TEST", "getHeight()= " + getHeight());
-                        Logger.v("TEST", "getRawDisplayHeight(getContext())= " + getRawDisplayHeight(getContext()));
-                        Logger.v("TEST", "getLocationInYAxis(this)= " + getLocationInYAxis(this));
-                        Logger.v("TEST", "((View) getParent()).getHeight()= " + ((View) getParent()).getHeight());
-                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()= " +
-                                (getRawDisplayHeight(getContext()) - ((View) getParent()).getHeight()));
-                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight= " +
-                                (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight));
-                        Logger.v("TEST", "getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - 500= " +
-                                (getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - 500));
-                        Logger.v("TEST", "--------------------------------");
-
                         return getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight;
                 }
                 break;
@@ -446,6 +421,7 @@ public class CustomDrawerLayout extends FrameLayout {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
+                        isAnimating = true;
                         animate().translationY(-translation)
                                 .setDuration(TRANSLATION_ANIM_DURATION)
                                 .setInterpolator(new DecelerateInterpolator())
@@ -453,12 +429,14 @@ public class CustomDrawerLayout extends FrameLayout {
                                     @Override
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
+                                        isAnimating = false; // reset
                                         notifyActionForState(stateToApply, notify);
                                         setTranslationY(0);
                                     }
                                 });
                         break;
                     case LOCK_MODE_CLOSED:
+                        isAnimating = true;
                         animate().translationY(translation)
                                 .setDuration(TRANSLATION_ANIM_DURATION)
                                 .setInterpolator(new DecelerateInterpolator())
@@ -466,6 +444,7 @@ public class CustomDrawerLayout extends FrameLayout {
                                     @Override
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
+                                        isAnimating = false; // reset
                                         notifyActionForState(stateToApply, notify);
                                         setTranslationY(0);
                                     }

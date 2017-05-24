@@ -8,7 +8,7 @@ import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RelativeLayout rlTop, rlSlideable;
+    private RelativeLayout rlTop, rlOffsetView;
     private CustomDrawerLayout mCustomDrawerLayout;
     private int mOffsetHeight;
     private boolean isDrawerMeasured, isViewMeasured;
@@ -23,9 +23,9 @@ public class MainActivity extends AppCompatActivity {
 
         rlTop = (RelativeLayout) findViewById(R.id.rl_top);
         mCustomDrawerLayout = (CustomDrawerLayout) findViewById(R.id.sliding_layout);
-        rlSlideable = (RelativeLayout) findViewById(R.id.slideable);
+        rlOffsetView = (RelativeLayout) findViewById(R.id.offset_view);
         // setup drawer attributes
-        setOffsetHeight(rlSlideable, rlTop);
+        setOffsetHeight(rlOffsetView, rlTop);
         mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_OPEN);
 
         // initialize listeners
@@ -39,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
         onMeasureHeightReadyListener(new OnMeasureHeightReadyListener() {
             @Override
             public void onMeasuredHeight(int viewId, int height) {
-                if (viewId == rlSlideable.getId()) {
+                if (viewId == rlOffsetView.getId()) {
                     // update offset height
-                    mOffsetHeight = rlSlideable.getMeasuredHeight();
+                    mOffsetHeight = rlOffsetView.getMeasuredHeight();
                     // set offset height
                     mCustomDrawerLayout.setOffsetHeight(mOffsetHeight);
                 }

@@ -76,7 +76,7 @@
                 android:gravity="bottom" >
 
                 <RelativeLayout
-                    android:id="@+id/slideable"
+                    android:id="@+id/offset_view"
                     android:layout_width="match_parent"
                     android:background="#ffff00"
                     android:layout_height="80dp" >
