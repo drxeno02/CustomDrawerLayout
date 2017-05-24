@@ -324,14 +324,15 @@ public class CustomDrawerLayout extends FrameLayout {
                                 smoothScrollToAndNotify(diff);
                             } else if (absoluteVelocity > mMinimumVelocity) {
                                 // fling action
+                                Logger.v("TEST", "fling called, part 1");
                                 if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_CLOSED) {
                                     notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
                                 } else if (Math.abs(getRawDisplayHeight(getContext()) -
                                         tapCoordinate - getHeight()) < mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_OPEN) {
+                                    Logger.v("TEST", "fling called, part 2");
                                     notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
-
                                 }
                             } else {
                                 // tap action
@@ -346,6 +347,7 @@ public class CustomDrawerLayout extends FrameLayout {
                                     }
                                 } else {
                                     // smooth scroll
+                                    Logger.v("TEST", "2 - smoothScrollToAndNotify called");
                                     smoothScrollToAndNotify(diff);
                                 }
                             }
@@ -364,22 +366,17 @@ public class CustomDrawerLayout extends FrameLayout {
      */
     private void smoothScrollToAndNotify(int diff) {
         int length = getLength();
-        LockMode stateToApply;
         if (diff > 0) {
             if (diff > length / 2.5) {
-                stateToApply = LockMode.LOCK_MODE_CLOSED;
-                notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), true);
-            } else if (mLockMode == LockMode.LOCK_MODE_OPEN) {
-                stateToApply = LockMode.LOCK_MODE_OPEN;
-                notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), false);
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+            } else {
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
             }
         } else {
             if (Math.abs(diff) > length / 2.5) {
-                stateToApply = LockMode.LOCK_MODE_OPEN;
-                notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), true);
-            } else if (mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                stateToApply = LockMode.LOCK_MODE_CLOSED;
-                notifyActionAndAnimateForState(stateToApply, getTranslationFor(stateToApply), false);
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
+            } else {
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
             }
         }
     }
