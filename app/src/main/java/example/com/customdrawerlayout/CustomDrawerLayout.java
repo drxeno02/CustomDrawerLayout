@@ -370,13 +370,15 @@ public class CustomDrawerLayout extends FrameLayout {
             if (diff > length / 2.5) {
                 notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
             } else {
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
+                // no change in state, therefore no reason to notify state change. Boolean set to false
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), false);
             }
         } else {
             if (Math.abs(diff) > length / 2.5) {
                 notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
             } else {
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+                // no change in state, therefore no reason to notify state change. Boolean set to false
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), false);
             }
         }
     }
