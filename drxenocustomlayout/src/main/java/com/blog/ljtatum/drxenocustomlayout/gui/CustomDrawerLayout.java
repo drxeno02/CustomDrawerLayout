@@ -1,46 +1,45 @@
-package example.com.customdrawerlayout;
+package com.blog.ljtatum.drxenocustomlayout.gui;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.ClipData;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
+
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewConfigurationCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewTreeObserver;
-import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
-import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getLocationInYAxis;
-import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.getRawDisplayHeight;
-import static example.com.customdrawerlayout.CustomDrawerLayoutUtils.isClicked;
+import com.blog.ljtatum.drxenocustomlayout.R;
+import com.blog.ljtatum.drxenocustomlayout.utils.Utils;
+
+import static com.blog.ljtatum.drxenocustomlayout.utils.CustomDrawerLayoutUtils.getRawDisplayHeight;
+import static com.blog.ljtatum.drxenocustomlayout.utils.CustomDrawerLayoutUtils.isClicked;
 
 /**
- * Created by leonard on 4/4/2017.
+ * Created by LJTat on 11/1/2017.
  */
 
 public class CustomDrawerLayout extends FrameLayout {
 
-    private static final String TAG = CustomDrawerLayout.class.getSimpleName();
-
     /**
-     * Special value for the position of the layer. GRAVITY_BOTTOM means that the
-     * view will stay attached to the bottom part of the screen, and come from
-     * there into the viewable area.
+     * Special value for the position of the layer.
+     * <p>GRAVITY_BOTTOM means that the view will stay attached to the bottom part of
+     * the screen, and come from there into the viewable area</p>
      */
     public static final int GRAVITY_BOTTOM = 1;
-
+    private static final String TAG = CustomDrawerLayout.class.getSimpleName();
     /**
      * The default size of the panel that sticks out when closed
      */
@@ -49,7 +48,7 @@ public class CustomDrawerLayout extends FrameLayout {
     /**
      * Duration for animations
      */
-    private static final int TRANSLATION_ANIM_DURATION = 250;
+    private static final int TRANSLATION_ANIM_DURATION_SHORT = 200;
 
     /**
      * Minimum distance to indicate fling
@@ -60,22 +59,13 @@ public class CustomDrawerLayout extends FrameLayout {
      * The default lock mode state
      */
     private static final LockMode DEFAULT_LOCK_MODE_STATE = LockMode.LOCK_MODE_CLOSED; // default lock mode
-
-    // enums
-    public enum LockMode {
-        LOCK_MODE_OPEN, LOCK_MODE_CLOSED
-    }
-
-    private enum ScrollState {VERTICAL, HORIZONTAL}
-
     // position of the last motion event
     private float mInitialCoordinate;
-
+    // offset between rawY coordinate and view-related Y coordinate
+    private float mTouchOffsetY;
     // drag threshold
     private int mTouchSlop;
-    private int mMinimumVelocity;
-    private int mMaximumVelocity;
-    private int mFlingDistance;
+    private int mMinimumVelocity, mMaximumVelocity, mFlingDistance, mDelta, mLastCoordinate;
     // the height of the panel that sticks out when closed
     private int mOffsetHeight;
     // value for the position of the layer in the screen
@@ -86,61 +76,44 @@ public class CustomDrawerLayout extends FrameLayout {
     private ScrollState mScrollOrientation;
     // flag for when drawer is initialized
     private boolean isDrawerInitialized;
+    // flag to track if drawer is animating
     private boolean isAnimating;
+    // flag to disable touch events
+    private boolean isGlobalTouchEventDisabled, isFirstVisibleItemPos;
     // interaction listener
     private OnInteractListener mOnInteractListener;
     // velocity tracker
+    @Nullable
     private VelocityTracker mVelocityTracker;
-
-    private int mDelta;
-    private int mLastCoordinate;
     private long mPressStartTime;
-
-    /**
-     * Sets the listener to be invoked after a switch change
-     * {@link OnInteractListener}.
-     *
-     * @param listener Listener to set
-     */
-    @SuppressWarnings("unused")
-    public void setOnInteractListener(OnInteractListener listener) {
-        mOnInteractListener = listener;
-    }
-
-    @SuppressWarnings("unused")
-    public interface OnInteractListener {
-        void onDrawerOpened();
-
-        void onDrawerClosed();
-    }
 
     /**
      * Constructor
      *
-     * @param context
+     * @param context Interface to global information about an application environment
      */
-    public CustomDrawerLayout(Context context) {
+    public CustomDrawerLayout(@NonNull Context context) {
         this(context, null);
     }
 
     /**
      * Constructor
      *
-     * @param context
-     * @param attrs
+     * @param context Interface to global information about an application environment
+     * @param attrs   A collection of attributes, as found associated with a tag in an XML document
      */
-    public CustomDrawerLayout(Context context, AttributeSet attrs) {
+    public CustomDrawerLayout(@NonNull Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
     /**
      * Constructor
      *
-     * @param context
-     * @param attrs
-     * @param defStyleAttr
+     * @param context      Interface to global information about an application environment
+     * @param attrs        A collection of attributes, as found associated with a tag in an XML document
+     * @param defStyleAttr The defined style
      */
-    public CustomDrawerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CustomDrawerLayout(@NonNull Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         // get the attributes specified in attrs.xml
@@ -179,6 +152,17 @@ public class CustomDrawerLayout extends FrameLayout {
         }
     }
 
+    /**
+     * Sets the listener to be invoked after a switch change
+     * {@link OnInteractListener}.
+     *
+     * @param listener Callback for when the user interacts with the drawer
+     */
+    @SuppressWarnings("unused")
+    public void setOnInteractListener(OnInteractListener listener) {
+        mOnInteractListener = listener;
+    }
+
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
@@ -196,7 +180,12 @@ public class CustomDrawerLayout extends FrameLayout {
     }
 
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
+    public boolean onInterceptTouchEvent(@NonNull MotionEvent event) {
+        // ignore touch events if disabled
+        if (isGlobalTouchEventDisabled) {
+            return false;
+        }
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 switch (mStickTo) {
@@ -221,20 +210,21 @@ public class CustomDrawerLayout extends FrameLayout {
                 // confirm that difference is enough to indicate drag action
                 if (diff > mTouchSlop) {
                     // start capturing events
-                    Logger.d(TAG, "drag is being captured");
+                    Log.d(TAG, "drag is being captured");
+                    mTouchOffsetY = Math.abs(getY() - event.getRawY());
                     return true;
                 }
                 break;
 
             case MotionEvent.ACTION_UP:
-                if (!FrameworkUtils.checkIfNull(mVelocityTracker)) {
+                if (!Utils.checkIfNull(mVelocityTracker)) {
                     mVelocityTracker.recycle();
                     mVelocityTracker = null;
                 }
                 break;
         }
         // add velocity movements
-        if (FrameworkUtils.checkIfNull(mVelocityTracker)) {
+        if (Utils.checkIfNull(mVelocityTracker)) {
             mVelocityTracker = VelocityTracker.obtain();
         }
         mVelocityTracker.addMovement(event);
@@ -249,14 +239,13 @@ public class CustomDrawerLayout extends FrameLayout {
         }
 
         // add velocity movements
-        if (FrameworkUtils.checkIfNull(mVelocityTracker)) {
+        if (Utils.checkIfNull(mVelocityTracker)) {
             mVelocityTracker = VelocityTracker.obtain();
         }
         mVelocityTracker.addMovement(event);
 
         final View parent = (View) getParent();
         final int coordinate;
-        final int distance = getDistance();
         final int tapCoordinate;
 
         switch (mStickTo) {
@@ -280,25 +269,19 @@ public class CustomDrawerLayout extends FrameLayout {
                 }
 
                 mLastCoordinate = coordinate;
+                mTouchOffsetY = Math.abs(getY() - mLastCoordinate);
                 mPressStartTime = System.currentTimeMillis();
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) getLayoutParams();
-                final int farMargin = coordinate - mDelta;
-                final int closeMargin = distance - farMargin;
-
-                switch (mStickTo) {
-                    case GRAVITY_BOTTOM:
-                        if (farMargin > distance && closeMargin > mOffsetHeight - getHeight()) {
-                            layoutParams.bottomMargin = closeMargin;
-                            layoutParams.topMargin = farMargin;
-                        }
-                        break;
-                    default:
-                        break;
+                float newY = coordinate - mTouchOffsetY;
+                if (newY < 0) {
+                    setY(0);
+                } else if (newY > parent.getHeight() - mOffsetHeight) {
+                    setY(parent.getHeight() - mOffsetHeight);
+                } else {
+                    setY(newY);
                 }
-                setLayoutParams(layoutParams);
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -307,7 +290,6 @@ public class CustomDrawerLayout extends FrameLayout {
 
                 switch (mStickTo) {
                     case GRAVITY_BOTTOM:
-
                         // determine velocity
                         int relativeVelocity;
                         mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
@@ -318,37 +300,34 @@ public class CustomDrawerLayout extends FrameLayout {
                         final int absoluteVelocity = Math.abs(relativeVelocity);
 
                         if (!isAnimating) {
-                            if (Math.abs(diff) > mTouchSlop) {
+                            if (Math.abs(diff) > mTouchSlop && mDelta > mFlingDistance) {
                                 // drag action
                                 // smooth scroll
                                 smoothScrollToAndNotify(diff);
-                            } else if (absoluteVelocity > mMinimumVelocity) {
+                            } else if (absoluteVelocity > mMinimumVelocity && mDelta > mFlingDistance) {
                                 // fling action
-                                Logger.v("TEST", "fling called, part 1");
                                 if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
+                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, true);
                                 } else if (Math.abs(getRawDisplayHeight(getContext()) -
                                         tapCoordinate - getHeight()) < mOffsetHeight &&
                                         mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                    Logger.v("TEST", "fling called, part 2");
-                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+                                    notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, true);
+                                } else {
+                                    // no change in state, therefore no reason to notify state change. Boolean set to false
+                                    notifyActionAndAnimateForState(mLockMode, false);
                                 }
                             } else {
                                 // tap action
                                 if (isClicked(getContext(), diff, pressDuration)) {
-                                    if (tapCoordinate > parent.getHeight() - mOffsetHeight &&
-                                            mLockMode == LockMode.LOCK_MODE_CLOSED) {
-                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, parent.getHeight() - mOffsetHeight, true);
-                                    } else if (Math.abs(getRawDisplayHeight(getContext()) -
-                                            tapCoordinate - getHeight()) < mOffsetHeight &&
-                                            mLockMode == LockMode.LOCK_MODE_OPEN) {
-                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, parent.getHeight() - mOffsetHeight, true);
+                                    if (mLockMode == LockMode.LOCK_MODE_CLOSED) {
+                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, true);
+                                    } else {
+                                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, true);
                                     }
                                 } else {
-                                    // smooth scroll
-                                    Logger.v("TEST", "2 - smoothScrollToAndNotify called");
-                                    smoothScrollToAndNotify(diff);
+                                    // no change in state, therefore no reason to notify state change. Boolean set to false
+                                    notifyActionAndAnimateForState(mLockMode, false);
                                 }
                             }
                         }
@@ -362,90 +341,67 @@ public class CustomDrawerLayout extends FrameLayout {
     /**
      * Method is used to animate the view to the given position
      *
-     * @param diff
+     * @param diff The difference in position of the drawer
      */
     private void smoothScrollToAndNotify(int diff) {
         int length = getLength();
         if (diff > 0) {
-            if (diff > length / 2.5) {
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), true);
+            if (diff > length / 5.0) {
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, true);
             } else {
                 // no change in state, therefore no reason to notify state change. Boolean set to false
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), false);
+                notifyActionAndAnimateForState(mLockMode, false);
             }
         } else {
-            if (Math.abs(diff) > length / 2.5) {
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getTranslationFor(LockMode.LOCK_MODE_OPEN), true);
+            if (Math.abs(diff) > length / 5.0) {
+                notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, true);
             } else {
                 // no change in state, therefore no reason to notify state change. Boolean set to false
-                notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getTranslationFor(LockMode.LOCK_MODE_CLOSED), false);
+                notifyActionAndAnimateForState(mLockMode, false);
             }
         }
-    }
-
-    /**
-     * Method is used to retrieve dimensions meant for translation
-     *
-     * @param stateToApply
-     * @return
-     */
-    private int getTranslationFor(LockMode stateToApply) {
-
-        switch (mStickTo) {
-            case GRAVITY_BOTTOM:
-                switch (stateToApply) {
-                    case LOCK_MODE_OPEN:
-                        return getHeight() - (getRawDisplayHeight(getContext()) - getLocationInYAxis(this));
-                    case LOCK_MODE_CLOSED:
-                        return getRawDisplayHeight(getContext()) - getLocationInYAxis(this) - mOffsetHeight;
-                }
-                break;
-            default:
-                break;
-        }
-        throw new IllegalStateException("Failed to return translation for drawer");
     }
 
     /**
      * Method is used to perform the animations
      *
-     * @param stateToApply
-     * @param translation
-     * @param notify
+     * @param stateToApply The drawer architecture has multiple states e.g.
+     *                     LOCK_MODE_OPEN, LOCK_MODE_CLOSED
+     * @param notify       True to log the animation progress of the drawer, otherwise false
      */
-    private void notifyActionAndAnimateForState(final LockMode stateToApply,
-                                                final int translation, final boolean notify) {
+    private void notifyActionAndAnimateForState(@NonNull final LockMode stateToApply, final boolean notify) {
+        final View parent = (View) getParent();
 
         switch (mStickTo) {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
                         isAnimating = true;
-                        animate().translationY(-translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
+                        animate().y(0)
+                                .setDuration(TRANSLATION_ANIM_DURATION_SHORT)
                                 .setInterpolator(new DecelerateInterpolator())
                                 .setListener(new AnimatorListenerAdapter() {
                                     @Override
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
-                                        isAnimating = false; // reset
+                                        isAnimating = false;
                                         notifyActionForState(stateToApply, notify);
-                                        setTranslationY(0);
+                                        animate().setListener(null);
                                     }
                                 });
                         break;
                     case LOCK_MODE_CLOSED:
                         isAnimating = true;
-                        animate().translationY(translation)
-                                .setDuration(TRANSLATION_ANIM_DURATION)
+                        animate().y(parent.getHeight() - mOffsetHeight)
+                                .setDuration(TRANSLATION_ANIM_DURATION_SHORT)
                                 .setInterpolator(new DecelerateInterpolator())
                                 .setListener(new AnimatorListenerAdapter() {
                                     @Override
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
-                                        isAnimating = false; // reset
+                                        isAnimating = false;
                                         notifyActionForState(stateToApply, notify);
-                                        setTranslationY(0);
+                                        animate().setListener(null);
                                     }
                                 });
                         break;
@@ -457,23 +413,23 @@ public class CustomDrawerLayout extends FrameLayout {
     /**
      * Method is used to update params based on gravity in order to position stickyTo
      *
-     * @param stateToApply
-     * @param notify
+     * @param stateToApply The drawer architecture has multiple states e.g.
+     *                     LOCK_MODE_OPEN, LOCK_MODE_CLOSED
+     * @param notify       True to log the animation progress of the drawer, otherwise false
      */
-    private void notifyActionForState(LockMode stateToApply, boolean notify) {
-        // create params
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) getLayoutParams();
+    public void notifyActionForState(LockMode stateToApply, boolean notify) {
+        if (Utils.checkIfNull(stateToApply)) {
+            stateToApply = mLockMode;
+        }
 
         switch (mStickTo) {
             case GRAVITY_BOTTOM:
                 switch (stateToApply) {
                     case LOCK_MODE_OPEN:
-                        params.bottomMargin = 0;
-                        params.topMargin = 0;
+                        setY(0);
                         break;
                     case LOCK_MODE_CLOSED:
-                        params.bottomMargin = mOffsetHeight - getHeight();
-                        params.topMargin = -(mOffsetHeight - getHeight());
+                        setY(getHeight() - mOffsetHeight);
                         break;
                 }
                 break;
@@ -483,26 +439,26 @@ public class CustomDrawerLayout extends FrameLayout {
         if (notify) {
             notifyActionFinished(stateToApply);
         }
-        setLayoutParams(params);
     }
 
     /**
      * Method is used to notify a change in the lock state of the drawer
      *
-     * @param state
+     * @param stateToApply The drawer architecture has multiple states e.g.
+     *                     LOCK_MODE_OPEN, LOCK_MODE_CLOSED
      */
-    private void notifyActionFinished(LockMode state) {
+    private void notifyActionFinished(@NonNull LockMode stateToApply) {
 
-        switch (state) {
+        switch (stateToApply) {
             case LOCK_MODE_OPEN:
                 mLockMode = LockMode.LOCK_MODE_OPEN;
-                if (!FrameworkUtils.checkIfNull(mOnInteractListener)) {
+                if (!Utils.checkIfNull(mOnInteractListener)) {
                     mOnInteractListener.onDrawerOpened();
                 }
                 break;
             case LOCK_MODE_CLOSED:
                 mLockMode = LockMode.LOCK_MODE_CLOSED;
-                if (!FrameworkUtils.checkIfNull(mOnInteractListener)) {
+                if (!Utils.checkIfNull(mOnInteractListener)) {
                     mOnInteractListener.onDrawerClosed();
                 }
                 break;
@@ -512,49 +468,42 @@ public class CustomDrawerLayout extends FrameLayout {
     /**
      * Check if drawer is opened
      *
-     * @return
+     * @return True if drawer is opened, otherwise false
      */
     public boolean isOpened() {
         return mLockMode == LockMode.LOCK_MODE_OPEN;
     }
 
     /**
-     * Check if drawer is clsoed
+     * Check if drawer is closed
      *
-     * @return
+     * @return True if drawer is closed, otherwise false
      */
     public boolean isClosed() {
         return mLockMode == LockMode.LOCK_MODE_CLOSED;
     }
 
+    /**
+     * Method is used to open drawer
+     */
     @SuppressWarnings("unused")
     public void openDrawer() {
-        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, getLength() - mOffsetHeight, !isOpened());
+        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, !isOpened());
     }
 
+    /**
+     * Method is used to close drawer
+     */
     @SuppressWarnings("unused")
     public void closeDrawer() {
-        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, getLength() - mOffsetHeight, !isClosed());
+        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, !isClosed());
     }
 
-    private int getDistance() {
-        final View parent = (View) getParent();
-
-        switch (mScrollOrientation) {
-            case VERTICAL:
-                return parent.getHeight() -
-                        parent.getPaddingTop() -
-                        parent.getPaddingBottom() -
-                        getHeight();
-            case HORIZONTAL:
-                return parent.getWidth() -
-                        parent.getPaddingLeft() -
-                        parent.getPaddingRight() -
-                        getWidth();
-        }
-        throw new IllegalStateException("Error Scroll orientation is not initialized");
-    }
-
+    /**
+     * Method is used to get the view height of width
+     *
+     * @return The view height or width depending upon of view orientation
+     */
     private int getLength() {
         switch (mScrollOrientation) {
             case VERTICAL:
@@ -569,7 +518,7 @@ public class CustomDrawerLayout extends FrameLayout {
      * Method is used to set the offset height for the sliding drawer. This is the how much you
      * want the drawer to stick out
      *
-     * @param offsetHeight
+     * @param offsetHeight The height to which you want the drawer to stick out
      */
     public void setOffsetHeight(int offsetHeight) {
         mOffsetHeight = offsetHeight;
@@ -578,10 +527,90 @@ public class CustomDrawerLayout extends FrameLayout {
     /**
      * Method is used to set the default lock mode, e.g. OPEN OR CLOSED
      *
-     * @param lockMode
+     * @param stateToApply The drawer architecture has multiple states e.g.
+     *                     LOCK_MODE_OPEN, LOCK_MODE_CLOSED
      */
-    public void setDefaultLockMode(LockMode lockMode) {
-        mLockMode = lockMode;
+    public void setDefaultLockMode(@NonNull LockMode stateToApply) {
+        mLockMode = stateToApply;
         notifyActionForState(mLockMode, false);
     }
+
+    /**
+     * Method is used to enable/disable global touch event
+     *
+     * @param isGlobalTouchEventDisabled True to enable interaction with entire drawer,
+     *                                   otherwise false
+     */
+    public void toggleGlobalTouchEvent(boolean isGlobalTouchEventDisabled) {
+        this.isGlobalTouchEventDisabled = isGlobalTouchEventDisabled;
+    }
+
+    /**
+     * Method is used to check if global touch events are enabled/disabled
+     *
+     * @return True if interaction with entire drawer is enabled, otherwise false
+     */
+    public boolean isGlobalTouchEventDisabled() {
+        return isGlobalTouchEventDisabled;
+    }
+
+    /**
+     * Method is used to setScrollableView. The scrollableView will disable global touch events
+     * by default to pass touch events to the passed in recyclerView
+     *
+     * @param recyclerView Flexible view for providing a limited window into a large data set
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    public void setScrollableView(@NonNull final RecyclerView recyclerView) {
+        // disable global touch events
+        isGlobalTouchEventDisabled = true;
+
+        // OnScrollListener
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int pos = lm.findFirstVisibleItemPosition();
+                isFirstVisibleItemPos = lm.findViewByPosition(pos).getTop() == 0 && pos == 0;
+            }
+        });
+
+        // OnTouchListener
+        recyclerView.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, @NonNull MotionEvent event) {
+                if (mLockMode == LockMode.LOCK_MODE_OPEN) {
+                    if (isFirstVisibleItemPos && event.getAction() == MotionEvent.ACTION_UP) {
+                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_CLOSED, true);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    if (event.getAction() == MotionEvent.ACTION_UP) {
+                        notifyActionAndAnimateForState(LockMode.LOCK_MODE_OPEN, true);
+                    }
+                    return false;
+                }
+            }
+        });
+
+    }
+
+    // enums
+    public enum LockMode {
+        LOCK_MODE_OPEN, LOCK_MODE_CLOSED
+    }
+
+    private enum ScrollState {VERTICAL, HORIZONTAL}
+
+    @SuppressWarnings("unused")
+    public interface OnInteractListener {
+        void onDrawerOpened();
+
+        void onDrawerClosed();
+    }
+
 }

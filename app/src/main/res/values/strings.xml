@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">CustomDrawerLayout</string>
+    <string name="app_name">DRXeno Silding Drawer</string>
+
+    <!-- text labels -->
+    <string name="design_experience">TOP SECTION\nDesign Your UI Experience</string>
+    <string name="design_experience_behind_drawer">BOTTOM SECTION\nDesign Your UI Experience (Content Hidden Behind Drawer)</string>
 </resources>

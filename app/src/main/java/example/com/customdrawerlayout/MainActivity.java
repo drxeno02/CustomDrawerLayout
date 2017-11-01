@@ -5,27 +5,26 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
+
+import com.blog.ljtatum.drxenocustomlayout.gui.CustomDrawerLayout;
+import com.blog.ljtatum.drxenocustomlayout.utils.Utils;
+
+/**
+ * Created by LJTat on 11/1/2017.
+ */
 
 public class MainActivity extends AppCompatActivity {
 
-    private RelativeLayout rlTop, rlOffsetView;
     private CustomDrawerLayout mCustomDrawerLayout;
-    private int mOffsetHeight;
-    private boolean isDrawerMeasured, isViewMeasured;
-
-    // custom listener
-    private OnMeasureHeightReadyListener mMeasureHeightReadyListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rlTop = (RelativeLayout) findViewById(R.id.rl_top);
         mCustomDrawerLayout = (CustomDrawerLayout) findViewById(R.id.sliding_layout);
-        rlOffsetView = (RelativeLayout) findViewById(R.id.offset_view);
-        // setup drawer attributes
-        setOffsetHeight(rlOffsetView, rlTop);
+        mCustomDrawerLayout.toggleGlobalTouchEvent(true);
         mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_OPEN);
 
         // initialize listeners
@@ -36,52 +35,30 @@ public class MainActivity extends AppCompatActivity {
      * Initialize custom listeners
      */
     private void initializeListeners() {
-        onMeasureHeightReadyListener(new OnMeasureHeightReadyListener() {
+        // OnInteractListener for drawer
+        mCustomDrawerLayout.setOnInteractListener(new CustomDrawerLayout.OnInteractListener() {
             @Override
-            public void onMeasuredHeight(int viewId, int height) {
-                if (viewId == rlOffsetView.getId()) {
-                    // update offset height
-                    mOffsetHeight = rlOffsetView.getMeasuredHeight();
-                    // set offset height
-                    mCustomDrawerLayout.setOffsetHeight(mOffsetHeight);
-                }
+            public void onDrawerOpened() {
+                // do whatever you want when drawer opens
+                Toast.makeText(MainActivity.this, "drawer opened", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onDrawerClosed() {
+                // do whatever you want when drawer closes
+                Toast.makeText(MainActivity.this, "drawer closed", Toast.LENGTH_LONG).show();
             }
         });
-    }
 
-    /**
-     * Method is used to set callback for when view has been measured. This is used for setting
-     * the drawer offset
-     */
-    private void onMeasureHeightReadyListener(OnMeasureHeightReadyListener listener) {
-        mMeasureHeightReadyListener = listener;
-    }
+        // animate top and bottom views
+        ViewTreeObserver vto = mCustomDrawerLayout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 
-    /**
-     * Interface to track when views are measured. This is used for setting the drawer offset
-     */
-    private interface OnMeasureHeightReadyListener {
-        void onMeasuredHeight(int viewId, int height);
-    }
-
-    /**
-     * Method is used to set drawer offset height
-     *
-     * @param params
-     */
-    private void setOffsetHeight(View... params) {
-        for (final View v : params) {
-            if (!FrameworkUtils.checkIfNull(v)) {
-                v.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        // remove view tree observer
-                        v.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        // set listener
-                        mMeasureHeightReadyListener.onMeasuredHeight(v.getId(), v.getMeasuredHeight());
-                    }
-                });
+            @Override
+            public void onGlobalLayout() {
+                mCustomDrawerLayout.setOffsetHeight(mCustomDrawerLayout.getHeight() / 4);
+                mCustomDrawerLayout.setDefaultLockMode(CustomDrawerLayout.LockMode.LOCK_MODE_CLOSED);
             }
-        }
+        });
     }
 }
