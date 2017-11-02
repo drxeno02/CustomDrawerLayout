@@ -1,4 +1,4 @@
-# ![1] Sliding Drawer by Leonard Tatum
+# Sliding Drawer by Leonard Tatum
 
 I created this sliding drawer to counter the many sliding drawers that are architectured as a ViewGroup that can have only 2 children. The 1st one is the <b>non slidable view</b>; the 2nd is the <b>slidable view</b>, which can slide over the <b>non slidable view</b>.<br/><br/> There are major disadvantages to this. My sliding drawer has no such limitations. And another substantial difference from all other implementations is that it is easy to position the <b>slidable view</b> relative to any view. My sliding drawer can hide content out of the screen and allow the user to drag a handle to bring the content on screen. Currently this drawer is meant only for vertical orientations. The size of the sliding drawer can be defined, an offset can be set, the drawer can take on any shape, content and/or child views. 
 
