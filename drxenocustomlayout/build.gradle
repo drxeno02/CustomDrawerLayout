@@ -3,6 +3,13 @@ apply plugin: 'com.android.library'
 // top-level build file to help synchronize library versions
 ext {
     supportLib = "25.3.1"
+
+    developerId = 'drxeno02'
+    developerName = 'Leonard Tatum'
+    developerEmail = 'ljtatum@hotmail.com'
+
+    siteUrl = 'https://github.com/drxeno02/androidprojects-book2-slidingdrawer'
+    gitUrl = 'https://github.com/drxeno02/androidprojects-book2-slidingdrawer.git'
 }
 
 android {
@@ -26,12 +33,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-
-//    implementation 'com.android.support:appcompat-v7:26.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-
 
     compile "com.android.support:design:${supportLib}"
     compile "com.android.support:support-v4:${supportLib}"
